@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cashflow — Крысиные бега онлайн</title>
+<style>
+:root{--g:rgba(255,255,255,.08);--b:rgba(255,255,255,.15)}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,Segoe UI,Roboto,sans-serif;color:#fff;min-height:100vh;
+background:radial-gradient(circle at 20% 10%,#5b2a86,transparent 50%),radial-gradient(circle at 90% 90%,#0f6a8c,transparent 50%),#150d2b;background-attachment:fixed}
+button{font:inherit;cursor:pointer;border:0;border-radius:12px;padding:10px 16px;color:#fff;font-weight:700;background:linear-gradient(135deg,#ff9f1c,#e8590c);box-shadow:0 4px 14px #0006;transition:.15s}
+button:hover{transform:translateY(-2px) scale(1.03)}button.alt{background:linear-gradient(135deg,#4dabf7,#7048e8)}button.no{background:#495057}
+input{font:inherit;padding:10px 14px;border-radius:12px;border:1px solid var(--b);background:#0004;color:#fff;width:100%;margin:6px 0}
+.glass{background:var(--g);border:1px solid var(--b);border-radius:18px;backdrop-filter:blur(10px);padding:14px}
+#lobby{max-width:420px;margin:8vh auto;text-align:center;animation:pop .6s}
+#lobby h1{font-size:2.6em;margin:0;background:linear-gradient(90deg,#ffd43b,#ff6b6b);-webkit-background-clip:text;color:transparent}
+.rat{font-size:4em;display:inline-block;animation:bob 1.6s infinite}
+@keyframes bob{50%{transform:translateY(-10px) rotate(8deg)}}@keyframes pop{from{opacity:0;transform:scale(.8)}}
+#game{display:flex;flex-wrap:wrap;gap:14px;padding:14px;justify-content:center}
+#bw{flex:1 1 560px;max-width:760px}#board{position:relative;display:grid;grid-template:repeat(7,1fr)/repeat(7,1fr);gap:4px;aspect-ratio:1}
+.cell{border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:clamp(14px,2.6vw,26px);
+text-align:center;box-shadow:inset 0 0 20px #0004;animation:pop .5s backwards}.cell small{font-size:clamp(6px,1vw,10px);opacity:.9;font-weight:700}
+.cell.now{outline:3px solid #fff;animation:glow 1s infinite alternate}@keyframes glow{to{box-shadow:0 0 22px #fff}}
+#center{grid-area:2/2/7/7;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;padding:10px}
+.tok{position:absolute;width:3.4%;aspect-ratio:1;border-radius:50%;border:2px solid #fff;display:grid;place-items:center;font-size:clamp(8px,1.6vw,16px);
+transition:left .2s,top .2s;box-shadow:0 3px 8px #000a;z-index:5}.tok.act{animation:hop .6s infinite alternate}@keyframes hop{to{margin-top:-8px}}
+#dice{display:flex;gap:30px;height:80px;perspective:500px;align-items:center}
+.cube{width:60px;height:60px;position:relative;transform-style:preserve-3d;transition:transform 1.2s cubic-bezier(.2,.8,.2,1)}
+.face{position:absolute;width:60px;height:60px;background:linear-gradient(145deg,#fff,#ddd);border-radius:11px;display:grid;grid:repeat(3,1fr)/repeat(3,1fr);padding:9px;backface-visibility:hidden}
+.face i{width:10px;height:10px;border-radius:50%;background:#222;place-self:center}
+.face:nth-child(1){transform:translateZ(30px)}.face:nth-child(2){transform:rotateY(90deg) translateZ(30px)}.face:nth-child(3){transform:rotateX(90deg) translateZ(30px)}
+.face:nth-child(4){transform:rotateX(-90deg) translateZ(30px)}.face:nth-child(5){transform:rotateY(-90deg) translateZ(30px)}.face:nth-child(6){transform:rotateY(180deg) translateZ(30px)}
+.card{background:linear-gradient(145deg,#fff,#ffe8a3);color:#222;border-radius:16px;padding:12px 16px;max-width:92%;animation:flip .5s;box-shadow:0 8px 24px #0007}
+@keyframes flip{from{transform:rotateY(90deg) scale(.7);opacity:0}}
+.row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;align-items:center}.card input{color:#222;background:#fff;width:90px;border-color:#aaa}
+aside{flex:1 1 300px;max-width:380px;display:flex;flex-direction:column;gap:12px}aside h3{margin:0 0 8px}
+.pl{display:flex;align-items:center;gap:8px;padding:6px;border-radius:10px}.pl.act{background:#ffffff22}.dot{width:14px;height:14px;border-radius:50%}
+.kv{display:flex;justify-content:space-between;font-size:.92em;padding:2px 0}.bar{height:12px;border-radius:8px;background:#0006;overflow:hidden;margin:8px 0}
+.bar div{height:100%;background:linear-gradient(90deg,#51cf66,#ffd43b);transition:width 1s}#log{max-height:200px;overflow:auto;font-size:.85em}#log div{padding:2px 0;animation:pop .4s}
+#toast{position:fixed;top:16px;left:50%;transform:translateX(-50%);background:#e03131;padding:10px 20px;border-radius:12px;z-index:99;display:none}
+#win{position:fixed;inset:0;background:#000a;display:none;place-items:center;z-index:50;text-align:center;font-size:1.6em}
+.conf{position:fixed;top:-20px;width:10px;height:14px;animation:fall 3s linear forwards;z-index:60}@keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
+#ov{position:absolute;inset:0;z-index:20;display:none;place-items:center;pointer-events:none;border-radius:16px;background:radial-gradient(circle,#000a,#000c)}
+.banner{position:absolute;top:7%;padding:10px 22px;border-radius:30px;font-weight:800;font-size:clamp(13px,2.3vw,22px);animation:ban .5s;box-shadow:0 6px 20px #0008}
+@keyframes ban{from{transform:translateY(-40px) scale(.6);opacity:0}}
+.dc{width:min(50%,250px);aspect-ratio:3/4;position:relative;transform-style:preserve-3d;animation:draw 1.4s cubic-bezier(.2,.9,.3,1) both}
+@keyframes draw{0%{transform:translate(-120%,100%) rotate(-25deg) rotateY(180deg) scale(.3)}45%{transform:translate(-15%,-8%) rotate(6deg) rotateY(180deg) scale(1.05)}100%{transform:none}}
+.df{position:absolute;inset:0;border-radius:18px;backface-visibility:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:14px;box-shadow:0 14px 40px #000a;border:3px solid #fff8}
+.df.back{transform:rotateY(180deg);font-size:3.4em}.df.back small{font-size:.28em;font-weight:800}
+.df.front{color:#222;background:linear-gradient(145deg,#fff,#ffe8a3);font-size:clamp(11px,1.7vw,16px)}.df.front .ic{font-size:2.6em}
+.pile{position:absolute;left:6%;bottom:8%;width:90px;height:120px}.pile i{position:absolute;inset:0;border-radius:12px;border:2px solid #fff8;animation:pile 1.4s both}
+@keyframes pile{to{opacity:.0}}
+.cell.rip{animation:rip .9s 2}@keyframes rip{0%{box-shadow:0 0 0 0 #fff}100%{box-shadow:0 0 0 26px #fff0}}
+.warn{background:#ffe3e3;color:#c92a2a;border-radius:10px;padding:6px 10px;margin:6px 0;font-weight:700;font-size:.9em}
+.card.shake{animation:shake .45s}@keyframes shake{25%{transform:translateX(-10px)}75%{transform:translateX(10px)}}
+.q{padding:6px 8px;font-size:.78em;border-radius:9px}
+
+/* --- подгонка под размер окна --- */
+@media(min-width:901px){body{overflow:hidden}#game{height:100vh;flex-wrap:nowrap;align-items:center;padding:10px;gap:12px;overflow:hidden}
+#bw{flex:none;max-width:none;width:min(calc(100vh - 20px),calc(100vw - 400px))}aside{flex:0 0 370px;max-width:370px;max-height:calc(100vh - 20px);overflow:auto}}
+@media(max-width:900px){#bw{flex:1 1 100%;max-width:none}aside{flex:1 1 100%;max-width:none}}
+#log{max-height:16vh}
+.cell{font-size:calc(var(--b,600px)*.04)}.cell small{font-size:calc(var(--b,600px)*.013)}.tok{font-size:calc(var(--b,600px)*.02)}
+.banner{font-size:calc(var(--b,600px)*.032)}.df.front{font-size:calc(var(--b,600px)*.022)}
+#center{font-size:calc(var(--b,600px)*.022);overflow:auto;gap:.5em;padding:.6em}#center button{padding:.45em .9em}#center .card{padding:.6em .9em}#center .card input{width:5em;padding:.3em}
+#dice{--s:calc(var(--b,600px)*.07);height:calc(var(--s)*1.5);gap:calc(var(--s)*.6);perspective:calc(var(--s)*9)}
+.cube,.face{width:var(--s);height:var(--s)}.face{padding:calc(var(--s)*.15);border-radius:calc(var(--s)*.18)}.face i{width:calc(var(--s)*.17);height:calc(var(--s)*.17)}
+.face:nth-child(1){transform:translateZ(calc(var(--s)/2))}.face:nth-child(2){transform:rotateY(90deg) translateZ(calc(var(--s)/2))}.face:nth-child(3){transform:rotateX(90deg) translateZ(calc(var(--s)/2))}
+.face:nth-child(4){transform:rotateX(-90deg) translateZ(calc(var(--s)/2))}.face:nth-child(5){transform:rotateY(-90deg) translateZ(calc(var(--s)/2))}.face:nth-child(6){transform:rotateY(180deg) translateZ(calc(var(--s)/2))}
+#mute{position:fixed;top:8px;right:8px;z-index:100;padding:6px 10px}
+
+/* --- чат, корона, крупные панели, карточка --- */
+@media(min-width:901px){#bw{width:min(calc(100vh - 20px),calc(100vw - 500px))}aside{flex:0 0 470px;max-width:470px}}
+aside{font-size:clamp(15px,.9vw + 6px,19px)}aside .glass{padding:16px}aside .pl{padding:7px}aside .kv{font-size:1em;padding:3px 0}aside h3{font-size:1.1em}
+#chat{flex:1 1 220px;min-height:190px;display:flex;flex-direction:column}#log{flex:1;overflow:auto;max-height:none;font-size:.95em}#log div{animation:none}
+.chat{background:#ffffff14;border-radius:8px;padding:3px 8px!important;margin:2px 0}.sys{color:#ffd43b}.chatrow{flex-wrap:nowrap;margin-top:8px}.chatrow input{margin:0}
+.df.front{overflow:hidden;padding:.8em}.df.front .tt{font-size:1.05em;overflow-wrap:anywhere;line-height:1.15}.df.front p{margin:.4em 0;overflow-wrap:anywhere;line-height:1.25}
+.df.back{overflow:hidden;text-align:center}.df.back small{overflow-wrap:anywhere;padding:0 .5em}.dc{width:min(56%,280px)}
+
+/* --- v5: раскладка, ресайз панелей, детали --- */
+@media(min-width:901px){#game{justify-content:flex-start;padding-left:8px}aside{flex:1 1 470px;max-width:600px}}
+.conf{pointer-events:none}
+#chat{flex:none}.grip{flex:none;height:12px;margin:-4px 0;cursor:row-resize;display:flex;align-items:center;justify-content:center;touch-action:none}
+.grip::after{content:'';width:70px;height:4px;border-radius:3px;background:#fff6}.grip:hover::after{background:#ffd43b}
+#leave{position:fixed;top:8px;right:58px;z-index:100;padding:6px 10px}
+#det{position:fixed;inset:0;background:#000b;z-index:80;display:none;place-items:center;padding:12px}
+.dbox{max-width:900px;width:100%;max-height:92vh;overflow:auto;background:#1d1238f2!important;font-size:15px}
+.dgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}.dh{margin:12px 0 4px;color:#ffd43b;font-weight:800}
+.kv.t{border-top:1px solid #fff5;font-weight:800;margin-top:3px;padding-top:4px}.dim{font-size:.82em;opacity:.7;margin:-1px 0 4px 10px}.pl:hover{background:#ffffff1a}
+
+/* --- v6: отступ слева и три колонки на широких экранах --- */
+.col{display:contents}#chat{height:42vh;min-height:260px}
+@media(min-width:901px){#game{padding-left:clamp(14px,3vw,48px)}}
+@media(min-width:1560px){
+ #bw{width:min(calc(100vh - 20px),calc(100vw - 860px))}
+ aside{flex:1 1 auto;max-width:none;flex-direction:row!important;overflow:visible;max-height:none;gap:14px}
+ .col{display:flex;flex-direction:column;gap:12px;min-height:0;max-height:calc(100vh - 20px)}
+ #colA{flex:0 0 380px;overflow:auto}
+ #colB{flex:1 1 320px;min-width:300px;height:calc(100vh - 20px)}
+ #chat{height:auto;min-height:0;flex:1 1 auto}
+}
+
+/* --- v7: инфо о клетках, колоды, правила --- */
+#md{position:fixed;inset:0;background:#000b;z-index:85;display:none;place-items:center;padding:12px}
+.cell{cursor:pointer;transition:filter .15s,transform .15s}.cell:hover{filter:brightness(1.3);transform:scale(1.05);z-index:3}.tok{pointer-events:none}
+#rules{position:fixed;top:8px;right:108px;z-index:100;padding:6px 10px}
+.gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:16px;padding:14px 4px}
+.gc{background:linear-gradient(145deg,#fff,#ffe8a3);color:#222;border-radius:14px;padding:0 0 10px;overflow:hidden;box-shadow:0 8px 18px #0009;transform:rotate(var(--r));animation:deal .55s var(--d) both;transition:transform .2s;font-size:13px;text-align:center}
+.gc:hover{transform:rotate(0) translateY(-8px) scale(1.06);z-index:2;position:relative}
+.gc .gb{font-size:30px;padding:6px}.gc b{display:block;padding:6px 8px 0}.gc p{margin:4px 8px 6px;font-size:.9em;opacity:.85}.gc .kv{padding:1px 10px;font-size:1em}
+@keyframes deal{from{opacity:0;transform:translateY(70px) rotate(0) scale(.6)}}
+.gh{font-weight:800;color:#ffd43b;margin:14px 0 0;font-size:1.1em}.ih{display:flex;align-items:center;gap:12px}.ih .ii{font-size:48px;width:80px;height:80px;border-radius:18px;display:grid;place-items:center;box-shadow:0 6px 18px #0008}
+#md details{background:#ffffff12;border-radius:12px;padding:8px 12px;margin:8px 0}#md summary{cursor:pointer;font-weight:800;font-size:1.05em}#md details p,#md details li{line-height:1.45;margin:6px 0}#md ul{padding-left:20px;margin:4px 0}
+.chip{display:inline-block;background:#ffffff22;border-radius:20px;padding:3px 10px;margin:2px;font-size:.9em}
+#game[hidden],#lobby[hidden]{display:none!important}
+</style></head><body>
+<div id="toast"></div><button id="mute" class="no">🔊</button><button id="leave" class="no" title="Выйти в меню">🚪</button><button id="rules" class="no" title="Правила игры">📖 Правила</button>
+<div id="lobby" class="glass"><div class="rat">🐀</div><h1>CASHFLOW</h1><p>Выберись из Крысиных бегов вместе с друзьями!</p>
+<input id="nm" placeholder="Ваше имя" maxlength="14"><button id="cr">Создать комнату</button>
+<p>или</p><input id="rc" placeholder="Код комнаты" maxlength="4" style="text-transform:uppercase"><button class="alt" id="jn">Войти</button></div>
+<div id="game" hidden><div id="bw"><div id="board"></div></div>
+<aside><div class="col" id="colA"><div class="glass" id="pls"></div><div class="grip" data-t="pls"></div><div class="glass" id="me"></div><div class="grip" data-t="me"></div></div><div class="col" id="colB"><div class="glass" id="chat"><h3>💬 События и чат</h3><div id="log"></div><div class="row chatrow"><input id="ci" placeholder="Сообщение или /команда…" maxlength="200"><button onclick="sendChat()">➤</button></div></div><div class="grip" data-t="chat"></div></div></aside></div>
+<div id="md"><div class="glass dbox"><button class="no" onclick="closeMd()" style="float:right">✕</button><div id="mdc"></div></div></div>
+<div id="det"><div class="glass dbox"><button class="no" onclick="closeDet()" style="float:right">✕</button><div id="dc2"></div></div></div>
+<div id="win"><div><div style="font-size:4em">🏆</div><div id="wt"></div><p><button onclick="leave()">В меню</button></p></div></div>
+<script>
+const $=q=>document.querySelector(q),sleep=t=>new Promise(r=>setTimeout(r,t));
+const BOARD=['pay','opp','doodad','market','opp','charity','doodad','market','opp','baby','doodad','market','pay','opp','doodad','market','opp','downsized','doodad','market','opp','baby','doodad','charity'];
+const T={pay:['💵','Зарплата','#2f9e44'],opp:['💼','Возможность','#1c7ed6'],market:['📈','Рынок','#7048e8'],doodad:['🛍️','Безделушки','#e8590c'],baby:['👶','Ребёнок','#d6336c'],charity:['❤️','Благотворит.','#e03131'],downsized:['📉','Увольнение','#495057']};
+const pos=i=>i<=6?[0,i]:i<=12?[i-6,6]:i<=18?[6,6-(i-12)]:[6-(i-18),0];
+const money=n=>(n<0?'-':'')+'$'+Math.abs(Math.round(n)).toLocaleString('ru');
+let ws,me=sessionStorage.id,S,seen=null,seenEv=0,priv=[],DECKS=null,Q={qb:10,qs:10},chain=Promise.resolve(),tp={},spin=0,built=false,celebrated=false;
+
+let AC,muted=localStorage.mute==='1';
+const ac=()=>AC||(AC=new(window.AudioContext||window.webkitAudioContext)());
+function tone(f,d=.15,ty='sine',v=.15,t0=0,f2){if(muted)return;try{const a=ac(),o=a.createOscillator(),g=a.createGain(),t=a.currentTime+t0;o.type=ty;o.frequency.setValueAtTime(f,t);
+ if(f2)o.frequency.exponentialRampToValueAtTime(f2,t+d);g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(g);g.connect(a.destination);o.start(t);o.stop(t+d)}catch(e){}}
+function noise(d=.1,v=.2,t0=0,f=1000){if(muted)return;try{const a=ac(),n=a.sampleRate*d,b=a.createBuffer(1,n,a.sampleRate),x=b.getChannelData(0);for(let i=0;i<n;i++)x[i]=(Math.random()*2-1)*(1-i/n);
+ const s=a.createBufferSource(),fl=a.createBiquadFilter(),g=a.createGain();s.buffer=b;fl.type='bandpass';fl.frequency.value=f;g.gain.value=v;s.connect(fl);fl.connect(g);g.connect(a.destination);s.start(a.currentTime+t0)}catch(e){}}
+const SND={click:()=>tone(600,.05,'square',.04),dice:()=>{for(let i=0;i<10;i++){noise(.07,.3,i*.11,700+Math.random()*1800);tone(200+Math.random()*200,.05,'triangle',.06,i*.11)}},
+ step:()=>tone(320+Math.random()*60,.07,'triangle',.12),card:()=>{noise(.45,.18,0,2800);tone(300,.4,'sine',.05,0,900)},flip:()=>{tone(900,.06,'square',.05);tone(600,.08,'square',.05,.06)},
+ coin:()=>{tone(988,.1,'square',.07);tone(1319,.3,'square',.07,.09)},bad:()=>tone(220,.45,'sawtooth',.12,0,90),baby:()=>[784,988,1175].forEach((f,i)=>tone(f,.22,'sine',.13,i*.12)),
+ win:()=>[523,659,784,1047,784,1047,1319].forEach((f,i)=>tone(f,.3,'triangle',.15,i*.15)),err:()=>tone(160,.3,'sawtooth',.12,0,100),turn:()=>{tone(660,.12,'sine',.12);tone(880,.2,'sine',.12,.12)}};
+const snd=n=>SND[n]&&SND[n]();
+document.addEventListener('pointerdown',()=>{try{ac().resume()}catch(e){}});
+document.addEventListener('click',e=>{if(e.target.closest('button')&&e.target.id!=='mute')snd('click')});
+$('#mute').onclick=()=>{muted=!muted;localStorage.mute=muted?'1':'0';$('#mute').textContent=muted?'🔇':'🔊';};$('#mute').textContent=muted?'🔇':'🔊';
+const fit=()=>{const b=$('#board');b&&document.documentElement.style.setProperty('--b',b.offsetWidth+'px')};window.addEventListener('resize',fit);
+let lastLine='',wasMyRoll=false;
+function sounds(s){const L=s.log,i=lastLine?L.lastIndexOf(lastLine):-1;const nw=(lastLine&&i<0?[]:L.slice(i+1)).filter(l=>!l.startsWith('💬')&&!l.startsWith('🛠'));lastLine=L[L.length-1]||'';
+ if(nw.some(l=>/[💵💰📊🏠]/u.test(l)))snd('coin');if(nw.some(l=>/💥|☠️/u.test(l)))snd('bad');if(nw.some(l=>/🏆/u.test(l)))snd('win');
+ const m=s.started&&s.players[s.turn].id===me&&s.phase==='roll';if(m&&!wasMyRoll)snd('turn');wasMyRoll=m;}
+const send=o=>ws.readyState===1&&ws.send(JSON.stringify(o));
+function conn(first){ws=new WebSocket((location.protocol==='https:'?'wss://':'ws://')+location.host);
+ ws.onopen=()=>first?send(first):sessionStorage.room&&me&&send({a:'rejoin',room:sessionStorage.room,id:me});
+ ws.onmessage=e=>{const m=JSON.parse(e.data);
+  if(m.t==='joined'){DECKS=m.decks;me=m.id;sessionStorage.id=me;sessionStorage.room=m.room;}
+  if(m.t==='sys'){m.m.split('\n').forEach(l=>priv.push(l));if(S)feed(S);}
+  if(m.t==='err'){toast(m.m);if(m.reset)sessionStorage.clear();}
+  if(m.t==='state')chain=chain.then(()=>handle(m.s));};
+ ws.onclose=()=>setTimeout(()=>conn(),1500);}
+function toast(t){snd('err');const e=$('#toast');e.textContent=t;e.style.display='block';setTimeout(()=>e.style.display='none',4000)}
+const nm=()=>$('#nm').value.trim()||'Игрок';
+$('#cr').onclick=()=>send({a:'create',name:nm()});$('#jn').onclick=()=>send({a:'join',room:$('#rc').value,name:nm()});
+conn();
+function build(){built=true;const b=$('#board');
+ BOARD.forEach((t,i)=>{const [r,c]=pos(i),d=document.createElement('div');d.className='cell';d.id='c'+i;d.onclick=()=>cellInfo(i);
+  d.style.cssText=`grid-area:${r+1}/${c+1};background:linear-gradient(145deg,${T[t][2]},#000a);animation-delay:${i*40}ms`;
+  d.innerHTML=`<span>${T[t][0]}</span><small>${T[t][1]}</small>`;b.append(d);});
+ const c=document.createElement('div');c.id='center';c.className='glass';
+ c.innerHTML='<div id="dice"></div><div id="st" style="font-weight:700;font-size:1.1em"></div><div id="act"></div>';b.append(c);const ov=document.createElement('div');ov.id='ov';b.append(ov);
+ for(let k=0;k<2;k++){const cu=document.createElement('div');cu.className='cube';cu.id='cu'+k;
+  const P={1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]};
+  for(let n=1;n<=6;n++){const f=document.createElement('div');f.className='face';for(let j=0;j<9;j++)f.innerHTML+=P[n].includes(j)?'<i></i>':'<b></b>';cu.append(f);}
+  $('#dice').append(cu);}fit();}
+const ROT={1:[0,0],2:[0,-90],3:[-90,0],4:[90,0],5:[0,90],6:[0,180]};
+const sp=[[0,0],[0,0]];
+async function rollDice(d){snd('dice');const c1=$('#cu1');c1.style.display=d.length>1?'':'none';void c1.offsetWidth;
+ d.forEach((v,i)=>{const [x,y]=ROT[v],c=$('#cu'+i);sp[i][0]+=720+360*Math.floor(Math.random()*3);sp[i][1]+=720+360*Math.floor(Math.random()*3);
+  c.style.transitionDuration=(1.1+i*.25)+'s';c.style.transform=`rotateX(${sp[i][0]+x}deg) rotateY(${sp[i][1]+y}deg)`;});await sleep(1400);}
+function place(s){document.querySelectorAll('.cell').forEach(e=>e.classList.remove('now'));
+ s.players.forEach((p,i)=>{let t=document.getElementById('t'+p.id);if(!t){t=document.createElement('div');t.id='t'+p.id;t.className='tok';t.textContent=p.name[0].toUpperCase();$('#board').append(t);}
+  const [r,c]=pos(tp[p.id]??p.pos);t.style.background=p.color;t.style.color='#000';
+  t.style.left=`calc(${(c+.5)/7*100}% - 1.7% + ${(i%3-1)*9}px)`;t.style.top=`calc(${(r+.5)/7*100}% - 1.7% + ${(i>>1)*8-6}px)`;
+  t.classList.toggle('act',s.started&&s.players[s.turn]===p);});}
+async function handle(s){
+ if(!built){$('#lobby').hidden=true;$('#game').hidden=false;build();seen=s.roll?s.roll.seq:0;seenEv=s.ev?s.ev.seq:0;}
+ if(s.roll&&s.roll.seq>seen){seen=s.roll.seq;await rollDice(s.roll.dice);const pl=s.players.find(p=>p.id===s.roll.pid);
+  let i=s.roll.from;while(i!==s.roll.to){i=(i+1)%24;tp[pl.id]=i;place(s);snd('step');await sleep(200);}tp={};}
+ if(s.ev&&s.ev.seq>seenEv){seenEv=s.ev.seq;await playEv(s.ev,s);}
+ S=s;fit();render(s);applyH();if(detId)renderDet();sounds(s);}
+const act=(a,x={})=>send({a,...x});window.act=act;
+const DK={doodad:['🛍️','Безделушки','#e8590c'],market:['📈','Рынок','#7048e8'],baby:['👶','Ребёнок','#d6336c'],downsized:['📉','Увольнение','#495057'],charity:['❤️','Благотворительность','#e03131'],small:['💼','Малая сделка','#1c7ed6'],big:['💎','Крупная сделка','#f08c00']};
+async function playEv(ev,s){const pl=s.players.find(p=>p.id===ev.pid),ov=$('#ov'),t=T[ev.cell],d=ev.deck?DK[ev.deck]:null;
+ const cl=document.getElementById('c'+pl.pos);cl&&cl.classList.add('rip');
+ ov.style.display='grid';
+ ov.innerHTML=`<div class="banner" style="background:${pl.color};color:#000">${ev.noland?`${d[0]} ${pl.name} тянет карту: ${d[1]}`:`${t[0]} ${pl.name} попадает на «${t[1]}»`}</div>`+
+ (d?`<div class="pile">${[0,1,2].map(i=>`<i style="background:${d[2]};transform:translate(${i*4}px,${-i*4}px)"></i>`).join('')}</div><div class="dc"><div class="df back" style="background:linear-gradient(145deg,${d[2]},#000a)">${d[0]}<small>${d[1]}</small></div><div class="df front"><div class="ic">${d[0]}</div><b class="tt">${ev.title}</b><p>${ev.text}</p></div></div>`:'');
+ if(d){snd('card');setTimeout(()=>snd('flip'),750);setTimeout(()=>{if(['doodad','downsized'].includes(ev.deck))snd('bad');if(ev.deck==='baby')snd('baby');},1300);}
+ await sleep(d?3300:1400);ov.style.display='none';ov.innerHTML='';cl&&cl.classList.remove('rip');}
+const mine=()=>S.players.find(p=>p.id===me);
+function shake(){const e=document.querySelector('#act .card');if(e){e.classList.add('shake');setTimeout(()=>e.classList.remove('shake'),500);}}
+function qc(v,max){const b=(l,d,c)=>`<button class="${c} q" onclick="qa('${v}',${d},${max})">${l}</button>`;
+ return `<div class="row">${b('−max',-1e9,'no')}${b('−100',-100,'no')}${b('−10',-10,'no')}<input type="number" min="1" value="${Q[v]}" oninput="Q['${v}']=+this.value">${b('+10',10,'alt')}${b('+100',100,'alt')}${b('+max',1e9,'alt')}</div>`;}
+function qa(v,d,max){Q[v]=Math.max(1,Math.min(Math.max(max,1),(Math.floor(Q[v])||1)+d));if(S)render(S);}
+function bs(){const c=S.card,n=Math.max(1,Math.floor(Q.qb)||1),lack=n*c.price-mine().cash;if(lack>0){toast(`⚠️ Не хватает ${money(lack)} — уменьшите количество или возьмите кредит`);shake();return;}act('buy',{n});}
+function br(d){const lack=d-mine().cash;if(lack>0){toast(`⚠️ Не хватает ${money(lack)} на первоначальный взнос — возьмите кредит`);shake();return;}act('buy');}
+function decideHTML(c,mp){const hd=`<div class="card"><b>${c.name}</b><div>${c.text}</div>`;
+ if(c.k==='stock'){const mx=Math.floor(mp.cash/c.price);Q.qb=Math.max(1,Math.min(Math.max(mx,1),Math.floor(Q.qb)||1));const cost=Q.qb*c.price,lack=cost-mp.cash;
+  return hd+`<div>Цена: ${money(c.price)}/акц.${c.div?` · дивиденд $${c.div}/акц.`:''}</div><div>У вас: ${money(mp.cash)} · можно купить: <b>${mx}</b></div>`+qc('qb',mx)+`<div>Итого: <b>${money(cost)}</b></div>`+
+  (lack>0?`<div class="warn">⚠️ Не хватает ${money(lack)}. Уменьшите количество или возьмите кредит (кнопка «+$1000 кредит»)</div>`:'')+`<div class="row"><button onclick="bs()">Купить ${Q.qb}</button><button class="no" onclick="act('pass')">Пропустить</button></div></div>`;}
+ const lack=c.down-mp.cash;
+ return hd+`<div>Цена ${money(c.cost)} · взнос <b>${money(c.down)}</b> · доход <b>+${money(c.cf)}/мес</b></div>`+(lack>0?`<div class="warn">⚠️ Не хватает ${money(lack)} на первоначальный взнос. Возьмите кредит кнопкой «+$1000 кредит»</div>`:'')+`<div class="row"><button onclick="br(${c.down})">Купить</button><button class="no" onclick="act('pass')">Пропустить</button></div></div>`;}
+function sellHTML(m,mp){const own=m.t==='stock'?mp.stocks[m.sym].n:mp.re.filter(a=>a.key===m.key).length;Q.qs=Math.max(1,Math.min(own,Math.floor(Q.qs)||1));
+ return `<div style="margin-top:6px">У вас: <b>${own}</b> шт.</div>`+qc('qs',own)+(m.t==='stock'?`<div>Выручка: <b>${money(Q.qs*m.price)}</b></div>`:'')+`<div class="row"><button onclick="act('sell',{n:Q.qs})">Продать ${Q.qs}</button></div>`;}
+const fl=l=>l.startsWith('💬')?`<div class="chat">${l}</div>`:l.startsWith('🛠')?`<div class="sys">${l}</div>`:`<div>${l}</div>`;
+function feed(s){const e=$('#log');e.innerHTML=s.log.map(fl).join('')+priv.slice(-12).map(l=>`<div class="sys">${l}</div>`).join('');e.scrollTop=1e5;}
+function sendChat(){const i=$('#ci'),t=i.value.trim();if(!t)return;send({a:'chat',text:t});i.value='';}
+$('#ci').addEventListener('keydown',e=>{if(e.key==='Enter')sendChat()});
+const leave=()=>{sessionStorage.clear();location.reload();};$('#leave').onclick=()=>{if(confirm('Выйти в меню?'))leave();};
+let detId=null;
+function showDet(id){if(!S||!S.started)return;detId=id;renderDet();$('#det').style.display='grid';}
+function closeDet(){detId=null;$('#det').style.display='none';}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeDet();closeMd();}});$('#det').addEventListener('click',e=>{if(e.target.id==='det')closeDet()});
+function renderDet(){const p=S.players.find(x=>x.id===detId);if(!p)return closeDet();const q=p.pr,L=q.L||[0,0,0,0,0];
+ const R=(a,b,c='')=>`<div class="kv ${c}"><span>${a}</span><b>${b}</b></div>`,D=t=>`<div class="dim">${t}</div>`,Z=(a,b)=>b?R(a,money(b)):'';
+ const mort=p.re.reduce((a,r)=>a+r.cost-r.down,0),stv=Object.values(p.stocks).reduce((a,v)=>a+v.n*v.cost,0);
+ let inc=R(`Зарплата (${q.n})`,money(q.sal));
+ Object.entries(p.stocks).forEach(([k,v])=>{if(v.div>0)inc+=R(`Дивиденды ${k}: ${v.n} × $${v.div}`,money(v.n*v.div))});
+ p.re.forEach(a=>inc+=R(a.name,'+'+money(a.cf)));
+ inc+=R('Пассивный доход',money(p.pas),'t')+R('Общий доход',money(p.inc),'t');
+ const ex=R('Налоги',money(q.tax))+R('Ипотека / аренда',money(q.home))+Z('Платёж за обучение',q.school)+Z('Автокредит',q.car)+Z('Кредитные карты',q.cc)+Z('Розничный долг',q.ret)+R('Прочие расходы',money(q.oth))+
+  R(`Дети: ${p.kids} × ${money(q.pc)}`,money(p.kids*q.pc))+D(`расход на одного ребёнка ${money(q.pc)}/мес, максимум 3 детей`)+R(`Банковский кредит: ${money(p.loan)} × 10%`,money(p.loan*.1))+R('Всего расходов',money(p.exp),'t');
+ const need=Math.floor(p.exp-p.pas)+1;
+ const res=R('Денежный поток (получка за круг)',`<span style="color:${p.cf<0?'#ff8787':'#8ce99a'}">${money(p.cf)}</span>`,'t')+R('До выхода из Крысиных бегов',p.pas>p.exp?'✅ условие выполнено':`не хватает пассива ${money(need)}`);
+ let as=R('Наличные',money(p.cash));
+ Object.entries(p.stocks).forEach(([k,v])=>as+=R(`📊 ${k}: ${v.n} шт. × ${money(v.cost)}`,money(v.n*v.cost))+(v.div?D(`дивиденд $${v.div}/акц. → ${money(v.n*v.div)}/мес`):''));
+ p.re.forEach(a=>as+=R(`🏠 ${a.name}`,'+'+money(a.cf)+'/мес')+D(`цена ${money(a.cost)} · взнос ${money(a.down)} · ипотека ${money(a.cost-a.down)} · ROI ${a.down?Math.round(a.cf*12/a.down*100)+'%':'—'}`));
+ as+=R('Вложено в активы',money(stv+p.re.reduce((a,r)=>a+r.down,0)),'t');
+ const li=Z('Ипотека (дом)',L[0])+Z('Кредит на обучение',L[1])+Z('Автокредит',L[2])+Z('Кредитные карты',L[3])+Z('Розничный долг',L[4])+Z('Ипотека по недвижимости',mort)+Z('Банковский кредит',p.loan)+R('Всего пассивов',money(L.reduce((a,b)=>a+b,0)+mort+p.loan),'t');
+ $('#dc2').innerHTML=`<h2 style="margin:0">📋 ${p.name} — ${q.n}</h2><div class="dgrid"><div><div class="dh">💰 Доходы</div>${inc}<div class="dh">💸 Расходы</div>${ex}<div class="dh">📈 Итог</div>${res}</div><div><div class="dh">🏦 Активы</div>${as}<div class="dh">📉 Пассивы (долги)</div>${li}</div></div>`;}
+const HH=JSON.parse(localStorage.hh2||'{}');
+function applyH(){for(const k in HH){const e=$('#'+k);if(e){e.style.height=HH[k]+'px';e.style.flex='none';e.style.overflow='auto';}}}
+document.querySelectorAll('.grip').forEach(g=>g.addEventListener('pointerdown',e=>{const t=g.dataset.t,p=$('#'+t),y0=e.clientY,h0=p.offsetHeight;g.setPointerCapture(e.pointerId);e.preventDefault();
+ const mv=ev=>{HH[t]=Math.max(70,Math.round(h0+ev.clientY-y0));applyH();},up=()=>{g.removeEventListener('pointermove',mv);g.removeEventListener('pointerup',up);localStorage.hh2=JSON.stringify(HH);};
+ g.addEventListener('pointermove',mv);g.addEventListener('pointerup',up);}));
+const KEYN={condo:'кондо',house:'дома',plex:'плексы',apt:'дома на 12 квартир',biz:'автоматизированный бизнес'};
+const CI={
+ pay:['Зарплата','Каждый раз, когда ты попадаешь на эту клетку или проходишь её, банк выплачивает тебе денежный поток: доходы минус расходы. Если поток отрицательный, ты платишь банку. Путь от получки до получки равен одному месяцу.'],
+ opp:['Возможность','Здесь ты выбираешь колоду: малую или крупную сделку. Малые сделки требуют до $5 000 первого взноса, крупные начинаются от $6 000. Если сделка не нужна, просто откажись. Карточка действует только в твой ход. Продавать её другим игрокам нельзя.'],
+ market:['Рынок','Вытягивается карточка рынка. Все игроки, у кого есть названный актив, могут продать его по указанной цене. Это единственный способ продавать активы, кроме банкротства. Бывают и просто события.'],
+ doodad:['Безделушки','Неожиданные и часто ненужные траты. Платить обязательно. Если не хватает наличных, автоматически берётся банковский кредит кратно $1 000.'],
+ baby:['Ребёнок','Рождается ребёнок: расходы растут на «расход на одного ребёнка» из твоей профессии каждый месяц. Максимум 3 ребёнка.'],
+ charity:['Благотворительность','Можно отдать 10% общего дохода и бросать 2 кубика на каждом из следующих 3 ходов. Отказаться тоже можно. Увольнение отменяет эффект.'],
+ downsized:['Увольнение','Ты временно потерял работу: заплати сумму общих расходов банку и пропусти 2 хода. Эффект благотворительности сгорает.']};
+let galOn=null;
+function gc(col,ic,tt,tx,rows,i){return `<div class="gc" style="--r:${((i*37)%11-5)*.8}deg;--d:${i*45}ms"><div class="gb" style="background:${col}">${ic}</div><b>${tt}</b>${tx?`<p>${tx}</p>`:''}${rows.map(([a,b])=>`<div class="kv"><span>${a}</span><b>${b}</b></div>`).join('')}</div>`;}
+function deckHTML(k){const D=DECKS[k],col={small:'#1c7ed6',big:'#f08c00',market:'#7048e8',doodad:'#e8590c'}[k];
+ if(k==='small'||k==='big')return D.map((c,i)=>c.k==='stock'?gc(col,'📊',`${c.name}`,c.text,[['Тикер',c.sym],['Цена',money(c.price)+'/акц.'],['Дивиденд',c.div?'$'+c.div+'/акц.':'нет']],i)
+  :gc(col,c.key==='biz'?'💼':'🏠',c.name,c.text,[['Цена',money(c.cost)],['Взнос',money(c.down)],['Ипотека',money(c.cost-c.down)],['Доход','+'+money(c.cf)+'/мес'],['ROI',Math.round(c.cf*12/c.down*100)+'%']],i)).join('');
+ if(k==='market')return D.map((c,i)=>c.t==='re'?gc(col,'🏠','Спрос на: '+KEYN[c.key],c.text,[['Цена продажи',money(c.price)]],i):c.t==='stock'?gc(col,'📊','Акции '+c.sym,c.text,[['Цена',money(c.price)+'/акц.']],i):gc(col,'⚡','Событие',c.text,c.gain?[['Бонус','+'+money(c.gain)]]:[],i)).join('');
+ return D.map((c,i)=>gc(col,'🛍️',c.n,'',[['Трата',money(c.c)]],i)).join('');}
+function gallery(t){const g=$('#gal');if(galOn===t){g.innerHTML='';galOn=null;$('#gb').textContent='🃏 Показать все карточки';return;}galOn=t;$('#gb').textContent='🙈 Скрыть карточки';
+ g.innerHTML=t==='opp'?`<div class="gh">💼 Малые сделки (${DECKS.small.length})</div><div class="gal">${deckHTML('small')}</div><div class="gh">💎 Крупные сделки (${DECKS.big.length})</div><div class="gal">${deckHTML('big')}</div>`
+  :`<div class="gh">${DK[t][0]} ${DK[t][1]} (${DECKS[t].length})</div><div class="gal">${deckHTML(t)}</div>`;g.scrollIntoView({behavior:'smooth',block:'nearest'});}
+function cellInfo(i){const t=BOARD[i],[ic,nm,col]=T[t],m=S&&S.started?mine():null;let ex='';
+ if(m){if(t==='baby')ex=`<span class="chip">Твой расход на ребёнка: ${money(m.pr.pc)}/мес</span><span class="chip">Детей: ${m.kids}/3</span>`;
+  if(t==='charity')ex=`<span class="chip">Сейчас 10% дохода = ${money(m.inc*.1)}</span>`;if(t==='downsized')ex=`<span class="chip">Сейчас платить: ${money(m.exp)}</span>`;if(t==='pay')ex=`<span class="chip">Твоя получка: ${money(m.cf)}</span>`;}
+ const who=S?S.players.filter(p=>p.pos===i).map(p=>`<span class="chip" style="background:${p.color};color:#000">${p.name}</span>`).join(''):'';
+ const has=DECKS&&['opp','market','doodad'].includes(t);galOn=null;
+ $('#mdc').innerHTML=`<div class="ih"><div class="ii" style="background:linear-gradient(145deg,${col},#000a)">${ic}</div><div><h2 style="margin:0">${nm}</h2><small>Клетка №${i+1} из 24</small></div></div><p style="line-height:1.5">${CI[t][1]}</p>${ex}${who?`<div style="margin-top:6px">На клетке сейчас: ${who}</div>`:''}
+ ${has?`<p><button id="gb" onclick="gallery('${t}')">🃏 Показать все карточки</button></p>`:''}<div id="gal"></div>`;$('#md').style.display='grid';}
+function closeMd(){$('#md').style.display='none';}$('#md').addEventListener('click',e=>{if(e.target.id==='md')closeMd()});
+const RULES=`<h2 style="margin:0">📖 Правила Cashflow</h2>
+<details open><summary>🎯 Цель игры</summary><p>Выбраться из «Крысиных бегов»: твой <b>пассивный доход</b> (дивиденды, доход от недвижимости и бизнеса) должен стать <b>больше общих расходов</b>. Прогресс виден в панели экономики. В этой онлайн-версии выход из Крысиных бегов сразу означает победу (Fast Track пока не реализован).</p></details>
+<details open><summary>🎲 Как проходит ход</summary><ul><li>Брось кубик и пройди столько клеток по часовой стрелке.</li><li>Выполни действие клетки. Клик по любой клетке поля показывает её описание и все возможные карточки.</li><li>Нажми «Завершить ход». Попасть на клетку с другим игроком можно без последствий.</li><li>Получка выплачивается при попадании на клетку «Зарплата» и при проходе через неё.</li></ul></details>
+<details><summary>🧩 Клетки Крысиных бегов</summary><ul><li>💵 <b>Зарплата</b>: получаешь денежный поток.</li><li>💼 <b>Возможность</b>: малая или крупная сделка.</li><li>📈 <b>Рынок</b>: покупатели для твоих активов и события.</li><li>🛍️ <b>Безделушки</b>: обязательная трата.</li><li>👶 <b>Ребёнок</b>: растут расходы (максимум 3 детей).</li><li>❤️ <b>Благотворительность</b>: 10% дохода в обмен на 2 кубика на 3 хода.</li><li>📉 <b>Увольнение</b>: платишь расходы и пропускаешь 2 хода.</li></ul></details>
+<details><summary>💼 Сделки и активы</summary><ul><li>Малые сделки: взнос до $5 000. Крупные: от $6 000.</li><li>Акции можно покупать в любом количестве по цене карточки, были бы деньги.</li><li>Недвижимость и бизнес: платишь только первоначальный взнос, платёж по ипотеке уже учтён в доходе.</li><li>Активы можно продавать только на карточке рынка. Другим игрокам продавать нельзя, объединяться для покупок тоже.</li></ul></details>
+<details><summary>🏦 Кредиты</summary><p>Кредит берётся кратно $1 000 под 10% в месяц ($100 в месяц с каждой тысячи). В свой ход можно гасить его частями по $1 000. Если на обязательную трату не хватает денег, кредит берётся автоматически.</p></details>
+<details><summary>💥 Банкротство</summary><p>Если денежный поток отрицателен и наличных не хватает на получке, ты банкрот: все активы продаются за половину первоначального взноса, ты пропускаешь 3 хода. Если поток всё равно отрицателен, ты выбываешь из игры.</p></details>
+<details><summary>🧮 Как считать</summary><ul><li><b>Общий доход</b> = зарплата + пассивный доход.</li><li><b>Расходы</b> = налоги + ипотека + кредиты + прочее + дети × расход на ребёнка + банковский кредит × 10%.</li><li><b>Денежный поток</b> = доход − расходы (это твоя получка).</li><li><b>ROI</b> = (поток за месяц × 12) ÷ первоначальный взнос.</li><li>Кнопка «🔍 Подробно» показывает всё по статьям.</li></ul></details>
+<details><summary>📘 Словарь</summary><ul><li><b>Актив</b>: то, что кладёт деньги тебе в карман.</li><li><b>Пассив</b>: то, что забирает деньги из кармана.</li><li><b>Пассивный доход</b>: доход от инвестиций без твоей работы.</li><li><b>Дивиденд</b>: доля прибыли компании на каждую акцию.</li><li><b>Ипотека</b>: кредит под залог недвижимости.</li><li><b>ROI</b>: годовая доходность вложенных денег в процентах.</li></ul></details>
+<details><summary>👑 Создатель комнаты</summary><p>Создатель комнаты может вводить в чате команды (<b>/help</b> показывает список): выдать деньги, переместить игрока, завершить игру и другие.</p></details>
+<details><summary>ℹ️ Чем онлайн-версия отличается от настольной</summary><ul><li>Нет Fast Track: выход из Крысиных бегов = победа.</li><li>Нет досрочного погашения ипотеки, автокредитов и карт, погашаются только банковские кредиты.</li><li>Карточки возможностей нельзя продавать другим игрокам.</li><li>Колоды карточек и цифры профессий (кроме Врача) приближённые, а не копия настольной игры.</li></ul></details>`;
+$('#rules').onclick=()=>{$('#mdc').innerHTML=RULES;$('#md').style.display='grid';};
+function render(s){const mp=s.players.find(p=>p.id===me),cp=s.players[s.turn],mine=s.started&&cp===mp;
+ place(s);if(s.started)document.getElementById('c'+cp.pos).classList.add('now');
+ $('#pls').innerHTML=`<h3>👥 Комната <b>${s.code}</b></h3>`+s.players.map(p=>`<div class="pl ${s.started&&p===cp?'act':''}" onclick="showDet('${p.id}')" style="cursor:pointer" title="Подробности"><span class="dot" style="background:${p.color}"></span>${s.host===p.id?'👑 ':''}<b>${p.name}</b>${p.online?'':' 💤'}<span style="margin-left:auto;font-size:.85em">${s.started?p.pr.n+' · '+money(p.cash):''}${p.out?' ☠️':''}</span></div>`).join('');
+ feed(s);
+ let st='',h='';
+ if(!s.started){st='Ждём игроков…';h=s.host===me?'<button onclick="act(\'start\')">Начать игру ▶</button>':'<div>Ждём, пока хост начнёт игру</div>';h+=`<div style="font-size:.9em">Позовите друзей: код <b>${s.code}</b></div>`;}
+ else{st=mine?'🎯 Ваш ход!':`Ходит ${cp.name}`;
+  if(mine){const ph=s.phase,c=s.card;
+   if(ph==='roll')h='<button onclick="act(\'roll\')">🎲 Бросить кубик</button>';
+   if(ph==='opp')h='<div class="row"><button class="alt" onclick="act(\'draw\')">Малая сделка</button><button onclick="act(\'draw\',{big:1})">Крупная сделка</button></div>';
+   if(ph==='decide'&&c)h=decideHTML(c,mp);
+   if(ph==='charityq')h='<div class="card">Пожертвовать 10% дохода и бросать 2 кубика 3 хода?<div class="row"><button onclick="act(\'charity\',{yes:1})">Да ❤️</button><button class="no" onclick="act(\'charity\',{})">Нет</button></div></div>';
+   if(ph==='end')h='<button onclick="act(\'end\')">Завершить ход ✔</button>';}
+  else if(s.phase==='decide'&&s.card)h=`<div class="card"><b>${s.card.name}</b> — ${s.card.text}</div>`;
+  const m=s.market;if(m){h+=`<div class="card" style="background:linear-gradient(145deg,#fff,#d0bfff)">📈 ${m.text}`;
+   if(mp&&((m.t==='stock'&&mp.stocks[m.sym])||(m.t==='re'&&mp.re.some(a=>a.key===m.key))))h+=sellHTML(m,mp);h+='</div>';}}
+ $('#st').textContent=st;$('#act').innerHTML=h;
+ const gm=document.querySelector('.grip[data-t="me"]');$('#me').style.display=gm.style.display=(mp&&s.started)?'':'none';
+ if(mp&&s.started){const q=mp.pr,pct=Math.min(100,mp.pas/mp.exp*100);
+  $('#me').innerHTML=`<h3>📋 ${q.n} <button class="alt q" onclick="showDet('${mp.id}')" style="float:right">🔍 Подробно</button></h3><div class="kv"><span>Зарплата</span><b>${money(q.sal)}</b></div><div class="kv"><span>Пассивный доход</span><b>${money(mp.pas)}</b></div><div class="kv"><span>Расходы</span><b>${money(mp.exp)}</b></div><div class="kv"><span>Денежный поток</span><b style="color:${mp.cf<0?'#ff8787':'#8ce99a'}">${money(mp.cf)}</b></div><div class="kv"><span>Наличные</span><b>${money(mp.cash)}</b></div><div class="kv"><span>Кредит</span><b>${money(mp.loan)}</b></div><div class="kv"><span>Детей</span><b>${mp.kids}</b></div>
+  <div class="bar"><div style="width:${pct}%"></div></div><small>Путь на Фаст-трек: пассивный доход ${money(mp.pas)} из ${money(mp.exp)}</small>
+  <div class="row" style="margin:8px 0"><button class="alt" onclick="act('loan',{amt:1000})">+$1000 кредит</button><button class="no" onclick="act('repay',{amt:1000})">−$1000</button></div>
+  <div style="font-size:.85em">${Object.entries(mp.stocks).map(([k,v])=>`📊 ${k}: ${v.n} шт.`).join('<br>')}${mp.re.map(a=>`<br>🏠 ${a.name} +${money(a.cf)}`).join('')}</div>`;}
+ if(s.winner&&!celebrated){celebrated=true;const w=s.players.find(p=>p.id===s.winner);$('#wt').textContent=w?`${w.name} выбрался из Крысиных бегов!`:'Игра завершена создателем комнаты';$('#win').style.display='grid';
+  for(let i=0;i<80;i++){const c=document.createElement('div');c.className='conf';c.style.left=Math.random()*100+'vw';c.style.background=`hsl(${Math.random()*360},90%,60%)`;c.style.animationDelay=Math.random()*2+'s';document.body.append(c);}}}
+</script></body></html>
